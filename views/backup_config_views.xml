@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue Liste Configuration Backup -->
+    <record id="view_backup_config_tree" model="ir.ui.view">
+        <field name="name">backup.config.tree</field>
+        <field name="model">backup.config</field>
+        <field name="arch" type="xml">
+            <list string="Configurations API de Sauvegarde">
+                <field name="name"/>
+                <field name="api_url"/>
+                <field name="role" widget="badge"/>
+                <field name="connection_status" widget="badge" 
+                       decoration-success="connection_status == 'success'"
+                       decoration-danger="connection_status == 'failed'"
+                       decoration-muted="connection_status == 'never'"/>
+                <field name="last_connection_test"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Vue Formulaire Configuration Backup -->
+    <record id="view_backup_config_form" model="ir.ui.view">
+        <field name="name">backup.config.form</field>
+        <field name="model">backup.config</field>
+        <field name="arch" type="xml">
+            <form string="Configuration API de Sauvegarde">
+                <header>
+                    <button name="test_connection" string="Tester la connexion" 
+                            type="object" class="btn-primary" icon="fa-plug"/>
+                    <button name="action_refresh_clients" string="Actualiser la liste des clients" 
+                            type="object" class="btn-secondary" icon="fa-refresh"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="ex: API de Sauvegarde Production"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name="api_url" placeholder="http://your-backup-api.example.com:8000"/>
+                            <field name="api_key" password="True"/>
+                            <field name="role"/>
+                        </group>
+                        <group>
+                            <field name="active"/>
+                            <field name="connection_status" widget="badge"
+                                   decoration-success="connection_status == 'success'"
+                                   decoration-danger="connection_status == 'failed'"
+                                   decoration-muted="connection_status == 'never'"/>
+                            <field name="last_connection_test"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Clients Disponibles" invisible="not available_clients_display">
+                            <field name="available_clients_display" nolabel="1" 
+                                   placeholder="Cliquez sur Actualiser la liste des clients pour remplir..."/>
+                        </page>
+                        <page string="Résultat du test de connexion" invisible="not api_user_info">
+                            <group>
+                                <field name="api_user_info" nolabel="1"/>
+                            </group>
+                        </page>
+                        <page string="Dernière Erreur" invisible="not connection_error">
+                            <group>
+                                <field name="connection_error" nolabel="1" 
+                                       class="text-danger"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action pour Configuration Backup -->
+    <record id="action_backup_config" model="ir.actions.act_window">
+        <field name="name">Configurations API</field>
+        <field name="res_model">backup.config</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>
