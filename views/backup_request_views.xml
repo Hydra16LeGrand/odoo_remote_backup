@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue Kanban Demande de Sauvegarde -->
+    <record id="view_backup_request_kanban" model="ir.ui.view">
+        <field name="name">backup.request.kanban</field>
+        <field name="model">backup.request</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" class="o_kanban_small_column">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="client_name"/>
+                <field name="anonymize"/>
+                <field name="include_filestore"/>
+                <field name="file_size_estimate"/>
+                <field name="requested_by"/>
+                <field name="state"/>
+                <field name="download_count"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click">
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_top">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="name"/>
+                                    </strong>
+                                    <span class="float-end">
+                                        <field name="state" widget="label_selection"
+                                               options="{'classes': {'draft': 'secondary', 'pending': 'warning', 'validated': 'success', 'rejected': 'danger', 'downloaded': 'info', 'cancelled': 'muted'}}"/>
+                                    </span>
+                                </div>
+                                <div class="o_kanban_record_body">
+                                    <div>
+                                        <i class="fa fa-database"/> <strong><field name="client_name"/></strong>
+                                    </div>
+                                    <div class="mt-1">
+                                        <t t-if="record.anonymize.raw_value">
+                                            <span class="badge badge-success">
+                                                <i class="fa fa-user-secret"/> Anonymisé
+                                            </span>
+                                        </t>
+                                        <t t-else="">
+                                            <span class="badge badge-warning">
+                                                <i class="fa fa-exclamation-triangle"/> Données originales
+                                            </span>
+                                        </t>
+                                        
+                                        <t t-if="record.include_filestore.raw_value">
+                                            <span class="badge badge-info ms-1">
+                                                <i class="fa fa-file"/> Avec fichiers
+                                            </span>
+                                        </t>
+                                    </div>
+                                    <div class="text-muted mt-1">
+                                        <i class="fa fa-hdd-o"/> Taille : <field name="file_size_estimate"/>
+                                    </div>
+                                    <t t-if="record.download_count.raw_value > 0">
+                                        <div class="text-muted">
+                                            <i class="fa fa-download"/> Téléchargé <field name="download_count"/> fois
+                                        </div>
+                                    </t>
+                                </div>
+                                <div class="o_kanban_record_bottom mt-2">
+                                    <div class="oe_kanban_bottom_left">
+                                        <i class="fa fa-user"/> <field name="requested_by"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Vue Formulaire Demande de Sauvegarde -->
+    <record id="view_backup_request_form" model="ir.ui.view">
+        <field name="name">backup.request.form</field>
+        <field name="model">backup.request</field>
+        <field name="arch" type="xml">
+            <form string="Demande de Sauvegarde">
+                <header>
+                    <button name="action_send_request" string="Envoyer la demande" 
+                            type="object" class="btn-primary" 
+                            invisible="state != 'draft'" data-hotkey="s"/>
+                    
+                    <button name="action_refresh_status" string="Actualiser le statut" 
+                            type="object" class="btn-secondary" 
+                            invisible="state != 'pending'" icon="fa-refresh"/>
+                    
+                    <button name="action_validate" string="Valider" 
+                            type="object" class="btn-success" 
+                            invisible="state != 'pending'"
+                            groups="odoo_remote_backup.group_backup_validator"
+                            icon="fa-check"/>
+                    <button name="action_reject" string="Rejeter" 
+                            type="object" class="btn-danger" 
+                            invisible="state != 'pending'"
+                            groups="odoo_remote_backup.group_backup_validator"
+                            icon="fa-times"/>
+                    
+                    <button name="action_download" string="Télécharger la sauvegarde" 
+                            type="object" class="btn-primary" 
+                            invisible="state not in ['validated', 'downloaded']"
+                            icon="fa-download"/>
+                    
+                    <button name="action_cancel" string="Annuler" 
+                            type="object" 
+                            invisible="state in ['validated', 'downloaded', 'cancelled']"
+                            confirm="Êtes-vous sûr de vouloir annuler cette demande ?"/>
+                    
+                    <field name="state" widget="statusbar" 
+                           statusbar_visible="draft,pending,validated,downloaded"/>
+                </header>
+                
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_downloads" class="oe_stat_button" type="object" icon="fa-download">
+                            <field name="download_count" widget="statinfo" 
+                                   string="Téléchargements"/>
+                        </button>
+                    </div>
+
+                    <widget name="web_ribbon" title="Validé" bg_color="bg-success" invisible="state != 'validated'"/>
+                    <widget name="web_ribbon" title="Téléchargé" bg_color="bg-info" invisible="state != 'downloaded'"/>
+                    <widget name="web_ribbon" title="Rejeté" bg_color="bg-danger" invisible="state != 'rejected'"/>
+                    <widget name="web_ribbon" title="Archivé" bg_color="bg-gray" invisible="active"/>
+
+                    <div class="oe_title">
+                        <label for="name" string="Référence de la demande"/>
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name="client_name" readonly="state != 'draft'" placeholder="Sélectionner la base de données..."/>
+                            <field name="config_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                        </group>
+                        <group>
+                            <field name="request_date"/>
+                            <field name="requested_by" widget="many2one_avatar_user"/>
+                             <field name="active" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Options de Sauvegarde">
+                        <group>
+                            <field name="anonymize" widget="boolean_toggle" readonly="state != 'draft'"/>
+                            <field name="include_filestore" widget="boolean_toggle" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <div class="o_horizontal_separator">Taille Estimée</div>
+                            <div class="d-flex align-items-center">
+                                <field name="file_size_estimate" class="fw-bold me-2"/>
+                                <span class="text-muted" invisible="not include_filestore">(Fichier volumineux)</span>
+                                <span class="text-success" invisible="include_filestore">(Petit fichier)</span>
+                            </div>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="État du Flux" name="status_page" invisible="state == 'draft'">
+                            <group>
+                                <group string="Détails API">
+                                    <field name="api_request_id"/>
+                                </group>
+                                <group string="Validation" invisible="not validated_date">
+                                    <field name="validated_by_name"/>
+                                    <field name="validated_date"/>
+                                </group>
+                                <group string="Rejet" invisible="state != 'rejected'">
+                                    <field name="rejection_reason" class="text-danger"/>
+                                    <field name="rejected_date"/>
+                                </group>
+                                <group string="Téléchargement" invisible="state not in ['validated', 'downloaded']">
+                                    <field name="download_url" widget="url"/>
+                                    <field name="downloaded_date"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vue Liste Demande de Sauvegarde -->
+    <record id="view_backup_request_tree" model="ir.ui.view">
+        <field name="name">backup.request.tree</field>
+        <field name="model">backup.request</field>
+        <field name="arch" type="xml">
+            <list string="Demandes de Sauvegarde" default_order="request_date desc">
+                <field name="name"/>
+                <field name="client_name"/>
+                <field name="anonymize" widget="boolean_toggle" optional="show"/>
+                <field name="include_filestore" widget="boolean_toggle" optional="show"/>
+                <field name="state" widget="badge" 
+                       decoration-success="state == 'validated'"
+                       decoration-info="state == 'downloaded'"
+                       decoration-warning="state == 'pending'"
+                       decoration-danger="state == 'rejected'"
+                       decoration-muted="state in ['draft', 'cancelled']"/>
+                <field name="requested_by"/>
+                <field name="request_date"/>
+                <field name="download_count" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Vue Recherche -->
+    <record id="view_backup_request_search" model="ir.ui.view">
+        <field name="name">backup.request.search</field>
+        <field name="model">backup.request</field>
+        <field name="arch" type="xml">
+            <search string="Demandes de Sauvegarde">
+                <field name="name"/>
+                <field name="client_name"/>
+                <field name="requested_by"/>
+                
+                <filter string="Mes demandes" name="my_requests"
+                        domain="[('requested_by', '=', uid)]"/>
+                <filter string="En attente" name="pending"
+                        domain="[('state', '=', 'pending')]"/>
+                <filter string="Validé" name="validated"
+                        domain="[('state', '=', 'validated')]"/>
+                <filter string="Téléchargé" name="downloaded"
+                        domain="[('state', '=', 'downloaded')]"/>
+                
+                <separator/>
+                <filter string="Anonymisé" name="anonymized"
+                        domain="[('anonymize', '=', True)]"/>
+                <filter string="Avec filestore" name="with_filestore"
+                        domain="[('include_filestore', '=', True)]"/>
+                
+                <group expand="0" string="Grouper par">
+                    <filter string="Statut" name="group_state" 
+                            context="{'group_by': 'state'}"/>
+                    <filter string="Client" name="group_client" 
+                            context="{'group_by': 'client_name'}"/>
+                    <filter string="Demandeur" name="group_requester" 
+                            context="{'group_by': 'requested_by'}"/>
+                    <filter string="Date de demande" name="group_request_date" 
+                            context="{'group_by': 'request_date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action pour Demandes de Sauvegarde -->
+    <record id="action_backup_request" model="ir.actions.act_window">
+        <field name="name">Demandes de Sauvegarde</field>
+        <field name="res_model">backup.request</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{'search_default_my_requests': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créer votre première demande de sauvegarde
+            </p>
+            <p>
+                Demandez des sauvegardes de base de données depuis l'API de sauvegarde distante.
+            </p>
+        </field>
+    </record>
+</odoo>
