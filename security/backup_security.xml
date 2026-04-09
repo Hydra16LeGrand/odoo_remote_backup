@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="module_category_remote_management" model="ir.module.category">
+        <field name="name">Accès Distant DB</field>
+        <field name="description">Gestion des accès aux bases de données distantes.</field>
+        <field name="sequence">100</field>
+    </record>
+    <!-- Security Groups -->
+    <record id="group_backup_user" model="res.groups">
+        <field name="name">Backup Utilisateur</field>
+        <field name="category_id" ref="module_category_remote_management"/>
+        <field name="comment">Peut créer des demandes de sauvegarde et télécharger ses propres sauvegardes</field>
+    </record>
+
+    <record id="group_backup_validator" model="res.groups">
+        <field name="name">Backup Valideur</field>
+        <field name="category_id" ref="module_category_remote_management"/>
+        <field name="implied_ids" eval="[(4, ref('group_backup_user'))]"/>
+        <field name="comment">Peut valider/rejeter toutes les demandes de sauvegarde</field>
+    </record>
+
+    <record id="group_backup_manager" model="res.groups">
+        <field name="name">Backup Admin</field>
+        <field name="category_id" ref="module_category_remote_management"/>
+        <field name="implied_ids" eval="[(4, ref('group_backup_validator'))]"/>
+        <field name="comment">Accès complet, y compris la configuration de l'API</field>
+    </record>
+
+    <!-- Record Rules -->
+    
+    <!-- Users can only see their own backup requests -->
+    <record id="backup_request_user_rule" model="ir.rule">
+        <field name="name">Demande de sauvegarde: Accès Utilisateur</field>
+        <field name="model_id" ref="model_backup_request"/>
+        <field name="groups" eval="[(4, ref('group_backup_user'))]"/>
+        <field name="domain_force">[('requested_by', '=', user.id)]</field>
+    </record>
+
+    <!-- Validators can see all backup requests -->
+    <record id="backup_request_validator_rule" model="ir.rule">
+        <field name="name">Demande de sauvegarde: Accès Valideur</field>
+        <field name="model_id" ref="model_backup_request"/>
+        <field name="groups" eval="[(4, ref('group_backup_validator'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <!-- Config visible to all backup users (read-only for non-managers) -->
+    <record id="backup_config_rule" model="ir.rule">
+        <field name="name">Configuration de sauvegarde: Tous les utilisateurs</field>
+        <field name="model_id" ref="model_backup_config"/>
+        <field name="groups" eval="[(4, ref('group_backup_user'))]"/>
+        <field name="domain_force">[('active', '=', True)]</field>
+    </record>
+</odoo>
