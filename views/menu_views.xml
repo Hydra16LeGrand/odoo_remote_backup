@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Integrate backup menus into Instance Hub menu from odoo_db_remote_management -->
+    
+    <!-- Backup Requests Menu - Main menu item under Instance Hub -->
+    <menuitem id="menu_backup_requests"
+              name="Sauvegardes"
+              parent="odoo_db_remote_management.menu_instance_hub_root"
+              action="action_backup_request"
+              sequence="20"
+              groups="odoo_remote_backup.group_backup_user"/>
+
+    <!-- Backup Configuration - Under Instance Hub > Configuration -->
+    <menuitem id="menu_backup_api_config"
+              name="Sauvegardes API"
+              parent="odoo_db_remote_management.menu_instance_hub_config"
+              action="action_backup_config"
+              sequence="30"
+              groups="odoo_remote_backup.group_backup_manager"/>
+</odoo>
