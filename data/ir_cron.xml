@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Cron Job: Sync Pending Backup Requests -->
+        <record id="ir_cron_sync_pending_requests" model="ir.cron">
+            <field name="name">Sync Pending Backup Requests</field>
+            <field name="model_id" ref="model_backup_request"/>
+            <field name="state">code</field>
+            <field name="code">model.cron_sync_pending_requests()</field>
+            <field name="interval_number">5</field>
+            <field name="interval_type">minutes</field>
+            <field name="priority">-1</field>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
+</odoo>
